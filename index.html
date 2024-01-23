@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primeros 400 Números Primos</title>
+  <style>
+    body {
+      background-color: #f0f0f0; /* Color de fondo de la página */
+      font-family: Arial, sans-serif;
+    }
+
+    .number-cell {
+      border: 1px solid #333; /* Color del borde de los cuadros de los números */
+      padding: 10px;
+      text-align: center;
+      width: 40px; /* Ajusta el tamaño según tu preferencia */
+      height: 40px; /* Ajusta el tamaño según tu preferencia */
+      margin: 5px; /* Margen entre los cuadros */
+      background-color: #7fb3d5; /* Color de fondo de los cuadros de los números */
+      color: #fff; /* Color del texto en los cuadros de los números */
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333; /* Color del texto del encabezado */
+    }
+
+    button {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #4caf50; /* Color de fondo del botón */
+      color: #fff; /* Color del texto del botón */
+      border: none;
+      cursor: pointer;
+    }
+
+    select,
+    input {
+      margin: 5px;
+      padding: 5px;
+    }
+
+    /* Estilos para centrar los h3 */
+    .h3-container {
+      text-align: center;
+    }
+
+  </style>
+</head>
+<body>
+
+<h1>Números Primos 1 - 400</h1>
+
+<!-- Botón para mostrar la tabla -->
+<button onclick="mostrarOcultarTabla()">Mostrar/Ocultar Tabla de Primos</button>
+
+<!-- Resultados -->
+<div id="resultados" class="row"></div>
+
+<!-- Menús adicionales -->
+<div>
+  <button onclick="mostrarOcultarNumerosPrimosPersonalizado(199)">Mostrar/Ocultar Primos de 199</button>
+  <button onclick="mostrarOcultarNumerosPrimosPersonalizado(293)">Mostrar/Ocultar Primos de 293</button>
+  <button onclick="mostrarOcultarNumerosPrimosPersonalizado(379)">Mostrar/Ocultar Primos de 379</button>
+</div>
+
+<!-- Menú de búsqueda -->
+<div>
+  <label for="buscarInput">Buscar Números Primos:</label>
+  <input type="number" id="buscarInput" placeholder="Ingrese un número">
+  <button onclick="buscarNumerosPrimos()">Buscar/Ocultar</button>
+  <p id="mensajeResultado"></p>
+</div>
+
+<!-- Contenedor para los h3 -->
+<div class="h3-container">
+  <h3>Antonio Corpus Renteria 6-J</h3>
+  <h3>Simulacion</h3>
+</div>
+
+<script>
+var tablaVisible = false;
+var numerosPrimosVisible = [false, false, false]; // Estado de visibilidad de los números primos
+
+function mostrarOcultarTabla() {
+  var resultadosDiv = document.getElementById("resultados");
+
+  // Limpiar resultados anteriores
+  resultadosDiv.innerHTML = "";
+
+  // Cambiar el estado de la visibilidad
+  tablaVisible = !tablaVisible;
+
+  if (tablaVisible) {
+    // Crear la tabla de los primeros 400 números primos
+    var contadorPrimos = 0;
+    var numero = 1;
+
+    function mostrarPrimos() {
+      while (contadorPrimos < 400) {
+        if (esPrimo(numero)) {
+          var numberCell = document.createElement("div");
+          numberCell.classList.add("number-cell");
+          numberCell.textContent = numero;
+          resultadosDiv.appendChild(numberCell);
+          contadorPrimos++;
+        }
+        numero++;
+      }
+
+      // Mostrar la tabla si no está visible
+      resultadosDiv.style.display = "flex";
+    }
+
+    // Solicitar la animación
+    requestAnimationFrame(mostrarPrimos);
+  } else {
+    // Ocultar la tabla de manera suave
+    resultadosDiv.style.display = "none";
+  }
+}
+
+function mostrarOcultarNumerosPrimosPersonalizado(numero) {
+  var resultadosDiv = document.getElementById("resultados");
+
+  // Limpiar resultados anteriores
+  resultadosDiv.innerHTML = "";
+
+  // Cambiar el estado de la visibilidad del número primo seleccionado
+  var index = obtenerIndiceNumeroPrimo(numero);
+  numerosPrimosVisible[index] = !numerosPrimosVisible[index];
+
+  // Mostrar u ocultar los números primos hasta el límite
+  mostrarNumerosPrimosHastaLimite(resultadosDiv, numero, numerosPrimosVisible[index]);
+}
+
+function buscarNumerosPrimos() {
+  var buscarInput = document.getElementById("buscarInput");
+  var numeroIngresado = parseInt(buscarInput.value);
+  var mensajeResultado = document.getElementById("mensajeResultado");
+
+  // Limpiar resultados anteriores
+  mensajeResultado.textContent = "";
+
+  if (!isNaN(numeroIngresado) && numeroIngresado > 0) {
+    var resultadosDiv = document.getElementById("resultados");
+
+    // Limpiar resultados anteriores
+    resultadosDiv.innerHTML = "";
+
+    // Mostrar u ocultar los números primos hasta el límite ingresado
+    mostrarNumerosPrimosHastaLimite(resultadosDiv, 2, true, numeroIngresado);
+  } else {
+    // Si el input está vacío, oculta la tabla
+    tablaVisible = false;
+    resultadosDiv.style.display = "none";
+    alert("Por favor, ingrese un número válido mayor que 0.");
+  }
+}
+
+function mostrarNumerosPrimosHastaLimite(resultadosDiv, inicio, mostrar, limite = 400) {
+  var contadorPrimos = 0;
+  var i = inicio;
+
+  function mostrarPrimos() {
+    while (contadorPrimos < limite) {
+      if (esPrimo(i) && mostrar) {
+        var numberCell = document.createElement("div");
+        numberCell.classList.add("number-cell");
+        numberCell.textContent = i;
+        resultadosDiv.appendChild(numberCell);
+        contadorPrimos++;
+      }
+      i++;
+    }
+
+    // Mostrar la tabla si no está visible
+    resultadosDiv.style.display = "flex";
+  }
+
+  // Solicitar la animación
+  requestAnimationFrame(mostrarPrimos);
+}
+
+function esPrimo(numero) {
+  if (numero < 2) return false;
+  for (var i = 2; i <= Math.sqrt(numero); i++) {
+    if (numero % i === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function obtenerIndiceNumeroPrimo(numero) {
+  switch (numero) {
+    case 199:
+      return 0;
+    case 293:
+      return 1;
+    case 379:
+      return 2;
+    default:
+      return -1;
+  }
+}
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
