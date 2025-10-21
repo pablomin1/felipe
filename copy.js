@@ -34,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "AUTOEJECUTAR": "palabra reservada",
         "CAPTURAR": "palabra reservada",
         "COMPARAR": "palabra reservada",
-        "SINO": "palabra reservada",
         "ORDENAR": "Palabra reservada",
         "PARA": "palabra reservada",
         "DIVIDIRCADENA": "palabra reservada",
@@ -55,8 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "-": "símbolo de resta",
         "*": "símbolo de multiplicación",
         "/": "símbolo de división",
-        "^": "símbolo de potencia",
-        "%": "símbolo de módulo",
         "(": "paréntesis izquierdo",
         ")": "paréntesis derecho",
         ";": "símbolo de fin de instrucción",
@@ -96,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
             { nombre: "PAUSARYREANUDARGENERADOR", forma: /^PausaryReanudarGenerador\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*;$/i },
             { nombre: "AUTOEJECUTAR", forma: /^autoejecutar\s*\(\s*[a-zA-Z_][a-zA-Z0-9_]*\s*,\s*\d+\s*\)\s*;$/i },
             { nombre: "CAPTURAR", forma: /^capturar\s*\(\s*"[^"]*"\s*\)\s*;$/i },
-            { nombre: "COMPARAR", forma: /^COMPARAR\s*\(\s*(?:[a-zA-Z_][a-zA-Z0-9_]*|\d+)\s*(==|!=|>=|<=|<|>)\s*(?:[a-zA-Z_][a-zA-Z0-9_]*|\d+)\s*\)\s*\{\s*[\s\S]*\s*\}(\s*SINO\s*\{\s*[\s\S]*\s*\})?\s*$/i },
+            { nombre: "COMPARAR", forma: /^comparar\s+(?:[a-zA-Z][a-zA-Z0-9]|\d+)\s(==|!=|>=|<=|<|>)\s(?:[a-zA-Z][a-zA-Z0-9]|\d+)\s+hacer\s+[\s\S]*;$/i },
             { nombre: "ORDENAR", forma: /^ordenar\s*\(\s*\[.*\]\s*\)\s*;$/i },
             { nombre: "PARA", forma: /^para\s*\(\s*var\s+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(\d+|[a-zA-Z_][a-zA-Z0-9_]*)\s*;\s*[a-zA-Z_][a-zA-Z0-9_]*\s*(==|!=|>=|<=|<|>)\s*(\d+|[a-zA-Z_][a-zA-Z0-9_]*)\s*;\s*[a-zA-Z_][a-zA-Z0-9_]*\s*(\+\+|--)\s*\)\s*\{\s*[\s\S]*\s*\}$/i },
             { nombre: "DIVIDIRCADENA", forma: /^dividirCadena\s*\(\s*("[^"]*"|[a-zA-Z_][a-zA-Z0-9_]*)\s*,\s*("[^"]*"|[a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*;$/i },
@@ -125,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return null; // Asignación válida
         }
         
-        if (/[a-zA-Z0-9"'\(\)\+\-\*\/\.%^]+/.test(codigoSinEspacios)) {
+        if (/[a-zA-Z0-9"'\(\)\+\-\*\/\.]+/.test(codigoSinEspacios)) {
              return null;
         }
 
@@ -139,13 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const errorInstruccion = validarInstruccionCompleta(codigo);
         if (errorInstruccion) return errorInstruccion;
 
-        const tokens = codigo.match(/!=|==|>=|<=|\|\||&&|\+\+|--|<<|>>|\^|%|\w+[\wñÑ]*|\[|\]|\(|\)|[=+\-*/{};,<>!]|"[^"]*"/g);
+        const tokens = codigo.match(/!=|==|>=|<=|\|\||&&|\+\+|--|\w+[\wñÑ]*|\[|\]|\(|\)|[=+\-*/{};,<>!]|"[^"]*"/g);
         if (!tokens) return "No se encontró ninguna cadena válida.";
 
         const instruccion = tokens[0]?.toUpperCase();
         if ((instruccion === "MOSTRAR" || instruccion === "CONVERTIRENTERO") &&
             tokens[1] === "(" && tokens[2] === '""' && tokens[3] === ")" && tokens[4] === ";") {
-            return `Error: instrucción ${instuccion} mal formada. La forma correcta es: ${instuccion}("texto");`;
+            return `Error: instrucción ${instruccion} mal formada. La forma correcta es: ${instruccion}("texto");`;
         }
         
         return tokens.map(token => {
@@ -221,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Función para generar un Abstract Syntax Tree (AST)
     function generarAST(expresion) {
-        const tokens = expresion.match(/([a-zA-Z_]\w*|\d+|[+\-*/%^()])/g);
+        const tokens = expresion.match(/([a-zA-Z_]\w*|\d+|[+\-*/()])/g);
         if (!tokens || tokens.length === 0) {
             throw new Error("Expresión inválida.");
         }
@@ -229,10 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const precedencia = {
             '+': 1,
             '-': 1,
-            '%': 2,
             '*': 2,
-            '/': 2,
-            '^': 3
+            '/': 2
         };
 
         const salida = [];
@@ -252,13 +247,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (operadores.length === 0) throw new Error("Paréntesis desequilibrados.");
                     ultimoOperador = operadores.pop();
                 }
-            } else if (['+', '-', '*', '/', '^', '%'].includes(token)) {
+            } else if (['+', '-', '*', '/'].includes(token)) {
                 let ultimoOperador = operadores[operadores.length - 1];
                 while (
                     operadores.length > 0 &&
                     ultimoOperador !== '(' &&
-                    precedencia[ultimoOperador] >= precedencia[token] &&
-                    !(precedencia[token] === 4 && precedencia[ultimoOperador] === 4) // Right-associativity for **
+                    precedencia[ultimoOperador] >= precedencia[token]
                 ) {
                     salida.push({ tipo: 'operador', valor: operadores.pop() });
                     ultimoOperador = operadores[operadores.length - 1];
@@ -524,17 +518,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     salirBtn.addEventListener("click", () => {
-        Swal.fire({
-            title: '¿Estás seguro que quieres salir?',
-            //icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, salir',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.close();
-            }
-        });
+        if (confirm("¿Estás seguro que quieres salir?")) {
+            window.close();
+        }
     });
 
     equipoBtn.addEventListener("click", () => {
@@ -543,529 +529,10 @@ document.addEventListener("DOMContentLoaded", () => {
             "Camacho García Julia Guadalupe",
             "Carreon Rivera Oscar",
             "García Mayorga Brayan Jair",
-            "<b>*Luna Alvarado Josué Daniel*</b>",
+            "*Luna Alvarado Josué Daniel*",
             "Ramirez Vazquez Wendy Itzel",
             "Vargas Guillén José Ricardo"
         ];
-
-        Swal.fire({
-            title: 'Equipo: Dragones 🐉',
-            html: integrantes.join('<br>') + '<br><br>Docente: Silva Hernández Felipe',
-            //icon: 'success',
-            confirmButtonText: 'Cerrar'
-        });
-    });
-
-    // Función para análisis semántico
-    // Analizador semántico completo sin reglas repetidas
-function analizarSemanticoCompleto(codigo) {
-    const resultado = [];
-    const reglas = new Set(); // Para almacenar reglas únicas
-
-    // Función para agregar reglas sin duplicados
-    function agregarRegla(regla) {
-        if (!reglas.has(regla)) {
-            reglas.add(regla);
-        }
-    }
-
-    // Eliminar saltos de línea innecesarios
-    codigo = codigo.replace(/\r\n/g, "\n").trim();
-
-    function analizarBloque(codigoBloque) {
-        let index = 0;
-
-        while (index < codigoBloque.length) {
-            let resto = codigoBloque.slice(index).trim();
-
-            // ------------------ DECLARAR (VARIABLE O ARREGLO) ------------------
-            let declararMatch = resto.match(/^declarar\s+(entero|flotante|cadena|conEntero|conFlotante|conCadena|booleano)\s+([a-zA-Z_]\w*(\[\s*\d+\s*\])?)\s*=\s*([^;]+);/i);
-            if (declararMatch) {
-                const tipo = declararMatch[1].trim();
-                const variable = declararMatch[2].trim();
-                const valor = declararMatch[4].trim();
-
-                // ------------------ Detección de arreglo o variable simple ------------------
-                const esArreglo = /\[\s*\d+\s*\]/.test(variable);
-                const esListaValores = /^\{.*\}$/.test(valor);
-
-                if (esArreglo && esListaValores) {
-                    // 📦 Declaración de arreglo
-                    resultado.push("instruct -> declarar tipo var[numV] = { expDec ( , expDec )* };");
-                    agregarRegla("tipo -> entero || flotante || cadena || conEntero || conFlotante || conCadena || booleano");
-                    agregarRegla("expDec -> num || \"let (let||numV)*\" || verdadero || falso");
-                    agregarRegla("var -> let (let||numV)*");
-                    agregarRegla("numV -> dig dig*");
-                    agregarRegla("let -> A-Z || a-z");
-                    agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                    agregarRegla("dig -> 0-9");
-                } else if (esArreglo && !esListaValores) {
-                    // 📦 Declaración de arreglo vacío o inicializado con una sola expresión
-                    resultado.push("instruct -> declarar tipo var[numV] = expDec;");
-                    agregarRegla("tipo -> entero || flotante || cadena || conEntero || conFlotante || conCadena || booleano");
-                    agregarRegla("expDec -> num || \"let (let||numV)*\" || verdadero || falso");
-                    agregarRegla("var -> let (let||numV)*");
-                    agregarRegla("numV -> dig dig*");
-                    agregarRegla("let -> A-Z || a-z");
-                    agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                    agregarRegla("dig -> 0-9");
-                } else {
-                    // 📦 Declaración simple (variable)
-                    resultado.push("instruct -> declarar tipo var = expDec;");
-                    agregarRegla("tipo -> entero || flotante || cadena || conEntero || conFlotante || conCadena || booleano");
-                    agregarRegla("expDec -> num || \"let (let||numV)*\" || verdadero || falso");
-                    agregarRegla("var -> let (let||numV)*");
-                    agregarRegla("let -> A-Z || a-z");
-                    agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                    agregarRegla("dig -> 0-9");
-                }
-
-                index += declararMatch[0].length;
-                continue;
-            }
-
-            // ------------------ MOSTRAR ------------------
-            let mostrarMatch = resto.match(/^mostrar\s*\("[^"]*"\);/i);
-            if (mostrarMatch) {
-                resultado.push('instruct -> mostrar("let (let||numV||b)*") || mostrar(var);');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                index += mostrarMatch[0].length;
-                continue;
-            }
-
-            // ------------------ CONVERTIRENTERO ------------------
-            let convertirMatch = resto.match(/^convertirEntero\s*\([^\)]+\);/i);
-            if (convertirMatch) {
-                resultado.push('instruct -> convertirEntero(expConInt);');
-                agregarRegla("expConInt -> var || num");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += convertirMatch[0].length;
-                continue;
-            }
-
-            // ------------------ ALEATORIONUMERO ------------------
-            let aleatorioMatch = resto.match(/^aleatorioNumero\s*\([^\)]+\);/i);
-            if (aleatorioMatch) {
-                resultado.push('instruct -> aleatorioNumero((var||num),(var || num);');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += aleatorioMatch[0].length;
-                continue;
-            }
-
-            // ------------------ COMPARAR ------------------
-            let compararMatch = resto.match(/^comparar\s*\(([^\)]+)\)\s*\{/i);
-            if (compararMatch) {
-                resultado.push("instruct -> comparar(expComp oprel expComp){ instruct instruct* }" + (resto.includes("sino{") ? " sino { instruct instruct* }" : ""));
-                agregarRegla("expComp -> var || num");
-                agregarRegla("oprel -> >= || <= || == || != || > || <");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-
-                // Contenido dentro de {}
-                let openBraces = 1;
-                let i = compararMatch[0].length;
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-                let bloqueInterno = resto.slice(compararMatch[0].length, i - 1);
-                analizarBloque(bloqueInterno);
-
-                // Sino
-                let sinoMatch = resto.slice(i).match(/^sino\s*\{/i);
-                if (sinoMatch) {
-                    let startSino = i + sinoMatch[0].length;
-                    let openSino = 1;
-                    let j = startSino;
-                    while (j < resto.length && openSino > 0) {
-                        if (resto[j] === '{') openSino++;
-                        else if (resto[j] === '}') openSino--;
-                        j++;
-                    }
-                    let bloqueSino = resto.slice(startSino, j - 1);
-                    analizarBloque(bloqueSino);
-                    i = j;
-                }
-
-                index += i;
-                continue;
-            }
-
-            // ------------------ MIENTRAS ------------------
-            let mientrasMatch = resto.match(/^mientras\s*\([^\)]+\)\s*\{/i);
-            if (mientrasMatch) {
-                resultado.push("instruct -> mientras(expMien oprel expMien){ instruct instruct* }");
-                agregarRegla("expMien -> var || num");
-                agregarRegla("oprel -> >= || <= || == || != || > || <");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-
-                // --- Capturar bloque interno correctamente usando mientrasMatch ---
-                let openBraces = 1;
-                let i = mientrasMatch[0].length; // <-- usar mientrasMatch aquí
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-
-                // tomar el contenido entre las llaves y analizarlo
-                let bloqueInterno = resto.slice(mientrasMatch[0].length, i - 1);
-                analizarBloque(bloqueInterno);
-
-                index += i;
-                continue;
-            }
-
-            // ------------------ PARA ------------------
-            let paraMatch = resto.match(/^para\s*\([^\)]+\)\s*\{/i);
-            if (paraMatch) {
-                resultado.push("instruct -> para(var = expPara; expPara oprel expPara; var++||var--){ instruct instruct* }");
-                agregarRegla("expPara -> var || num");
-                agregarRegla("oprel -> >= || <= || == || != || > || <");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-
-                let openBraces = 1;
-                let i = paraMatch[0].length;
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-                let bloqueInterno = resto.slice(paraMatch[0].length, i - 1);
-                analizarBloque(bloqueInterno);
-                index += i;
-                continue;
-            }
-
-            // ------------------ FUNCION ------------------
-            let funcionMatch = resto.match(/^funcion\s+[a-zA-Z_]\w*\s*\([^\)]*\)\s*\{/i);
-            if (funcionMatch) {
-                resultado.push("instruct -> funcion id(parametros){ instruct instruct* }");
-                agregarRegla("id -> let (let||numV)*");
-                agregarRegla("parametros -> (tipo var (, tipo var)*) || ε");
-                agregarRegla("tipo -> entero || flotante || cadena || conEntero || conFlotante || conCadena || booleano");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                
-
-                let openBraces = 1;
-                let i = funcionMatch[0].length;
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-                let bloqueInterno = resto.slice(funcionMatch[0].length, i - 1);
-                analizarBloque(bloqueInterno);
-                index += i;
-                continue;
-            }
-
-            // ------------------ SELECCIONAR ------------------
-            let seleccionarMatch = resto.match(/^seleccionar\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\)\s*\{/i);
-            if (seleccionarMatch) {
-                const variable = seleccionarMatch[1].trim();
-
-                // Regla estricta de salida
-                resultado.push("instruct -> seleccionar(var){ caso (numV||var||texto||bool): instruct terminar; (caso (numV||var||texto||bool): instruct terminar;)* porDefecto: instruct instruct* terminar; }");
-
-                // Reglas auxiliares
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                agregarRegla("texto -> \" let (let||numV||b)* \"");
-                agregarRegla("bool -> verdadero || falso || true || false");
-
-                // --- Capturar bloque interno ---
-                let openBraces = 1;
-                let i = seleccionarMatch[0].length;
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-
-                let bloqueInterno = resto.slice(seleccionarMatch[0].length, i - 1);
-
-                // --- Analizar cada 'caso' y 'porDefecto' ---
-                const casoRegex = /caso\s+([^\:]+)\s*:\s*([\s\S]*?)terminar;/gi;
-                let match;
-                while ((match = casoRegex.exec(bloqueInterno)) !== null) {
-                    const instrucciones = match[2].trim();
-                    // Analizar las instrucciones internas
-                    analizarBloque(instrucciones);
-                }
-
-                const porDefectoRegex = /porDefecto\s*:\s*([\s\S]*?)terminar;/i;
-                const porDefectoMatch = porDefectoRegex.exec(bloqueInterno);
-                if (porDefectoMatch) {
-                    const instruccionesPD = porDefectoMatch[1].trim();
-                    // Analizar las instrucciones internas del porDefecto
-                    analizarBloque(instruccionesPD);
-                }
-
-                index += i;
-                continue;
-            }
-
-
-            // ------------------ DEFINIRCLASE ------------------
-            let claseMatch = resto.match(/^definirClase\s+[A-Z][a-zA-Z0-9_]*\s*\{/i);
-            if (claseMatch) {
-                resultado.push("instruct -> definirClase(IdClase){ iniciar(parametros){ ESTE.var = var;* } metodo* }");
-                agregarRegla("IdClase -> let (let||numV)*");
-                agregarRegla("parametros -> (tipo var (, tipo var)*) || ε");
-                agregarRegla("tipo -> entero || flotante || cadena || conEntero || conFlotante || conCadena || booleano");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                
-                let openBraces = 1;
-                let i = claseMatch[0].length;
-                while (i < resto.length && openBraces > 0) {
-                    if (resto[i] === '{') openBraces++;
-                    else if (resto[i] === '}') openBraces--;
-                    i++;
-                }
-                let bloqueInterno = resto.slice(claseMatch[0].length, i - 1);
-                analizarBloque(bloqueInterno);
-                index += i;
-                continue;
-            }
-
-            // ------------------ DIVIDIRCADENA ------------------
-            let dividirMatch = resto.match(/^dividirCadena\s*\([^\)]+\);/i);
-            if (dividirMatch) {
-                resultado.push('instruct -> dividirCadena(expDivCad, exp);');
-                agregarRegla("expDivCad -> var");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                index += dividirMatch[0].length;
-                continue;
-            }
-
-            // ------------------ FECHAACTUAL ------------------
-            let fechaMatch = resto.match(/^fechaActual\s*\([^\)]+\);/i);
-            if (fechaMatch) {
-                resultado.push('instruct -> fechaActual("tipo_fecha");');
-                agregarRegla('tipo_fecha -> dia || mes || año || hora || minuto || segundo');
-                index += fechaMatch[0].length;
-                continue;
-            }
-
-            // ------------------ EXISTE ------------------
-            let existeMatch = resto.match(/^existe\s*\([^\)]+\);/i);
-            if (existeMatch) {
-                resultado.push('instruct -> existe((var || num), (var || num));');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += existeMatch[0].length;
-                continue;
-            }
-
-            // ------------------ TAMAÑOCADENA ------------------
-            let tamMatch = resto.match(/^tamañoCadena\s*\("[^"]*"\);/i);
-            if (tamMatch) {
-                resultado.push('instruct -> tamañoCadena("texto");');
-                agregarRegla('texto -> let (let||num||b)*');
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += tamMatch[0].length;
-                continue;
-            }
-
-            // ------------------ PAUSARYREANUDARGENERADOR ------------------
-            let pausaMatch = resto.match(/^PausaryReanudarGenerador\s*\([^\)]+\);/i);
-            if (pausaMatch) {
-                resultado.push('instruct -> PausaryReanudarGenerador(var);');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                index += pausaMatch[0].length;
-                continue;
-            }
-
-            // ------------------ AUTOEJECUTAR ------------------
-            let autoMatch = resto.match(/^autoejecutar\s*\([^\)]+\);/i);
-            if (autoMatch) {
-                resultado.push('instruct -> autoejecutar(var, var);');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                index += autoMatch[0].length;
-                continue;
-            }
-
-            // ------------------ CAPTURAR ------------------
-            let capturarMatch = resto.match(/^capturar\s*\(\s*([a-zA-Z_]\w*)\s*\);/i);
-            if (capturarMatch) {
-                resultado.push('instruct -> capturar(var);');
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("dig -> 0-9");
-                index += capturarMatch[0].length;
-                continue;
-            }
-
-            // ------------------ ORDENAR ------------------
-            let ordenarMatch = resto.match(/^ordenar\s*\([^\)]+\);/i);
-            if (ordenarMatch) {
-                resultado.push('instruct -> ordenar([expOrde (, expOrde*)*]);');
-                agregarRegla("expOrde -> var || num");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += ordenarMatch[0].length;
-                continue;
-            }
-
-            // ------------------ EQUIPO ------------------
-            let equipoMatch = resto.match(/^equipo\s*\(\);/i);
-            if (equipoMatch) {
-                resultado.push('instruct -> equipo();');
-                index += equipoMatch[0].length;
-                continue;
-            }
-
-            // ------------------ OBTENERCARACTER ------------------
-            let obtenerMatch = resto.match(/^obtenerCaracter\s*\([^\)]+\);/i);
-            if (obtenerMatch) {
-                resultado.push('instruct -> obtenerCaracter(expObtCarac, num);');
-                agregarRegla("expObtCarac -> var || num");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-                index += obtenerMatch[0].length;
-                continue;
-            }
-
-            // ------------------ ASIGNACIÓN O EXPRESIÓN ARITMÉTICA ------------------
-            let asignacionMatch = resto.match(/^([a-zA-Z_]\w*(\[\s*\d+\s*\])?)\s*=\s*([^;]+);/i);
-            if (asignacionMatch) {
-                const variable = asignacionMatch[1].trim();
-                let expresion = asignacionMatch[3].trim();
-
-                // Operadores válidos (sin '!')
-                const operadoresOpera = [
-                    '>=', '<=', '==', '!=', '&&', '||',
-                    '+', '-', '*', '/', '%', '^', '>', '<'
-                ];
-
-                // Detectar operadores usados
-                const operadoresUsados = new Set();
-                for (const op of operadoresOpera) {
-                    if (expresion.includes(op)) operadoresUsados.add(op);
-                }
-
-                // Reemplazar variables, índices y números por 'expAsig'
-                let expFormada = expresion
-                    // variables con índice -> expAsig
-                    .replace(/\b[A-Za-z_]\w*\s*\[\s*\d+\s*\]/g, 'expAsig')
-                    // variables simples -> expAsig
-                    .replace(/\b[A-Za-z_]\w*\b/g, 'expAsig')
-                    // números -> expAsig
-                    .replace(/\b\d+(\.\d+)?\b/g, 'expAsig');
-
-                // Reemplazar operadores por 'opera'
-                const operadoresOrdenados = Array.from(operadoresUsados).sort((a,b) => b.length - a.length);
-                for (const op of operadoresOrdenados) {
-                    const opEsc = op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const regex = new RegExp(`\\s*${opEsc}\\s*`, 'g');
-                    expFormada = expFormada.replace(regex, ' opera ');
-                }
-
-                expFormada = expFormada.replace(/\s+/g, ' ').trim();
-
-                // ------------------ Salida ------------------
-                if (variable.includes("[")) {
-                    resultado.push("instruct -> var[numV] = exp;");
-                } else {
-                    resultado.push("instruct -> var = exp;");
-                }
-                resultado.push(`exp -> ${expFormada}`);
-                if (operadoresUsados.size > 0) {
-                    resultado.push(`opera -> ${Array.from(operadoresUsados).join(" || ")}`);
-                } else {
-                    resultado.push("opera -> (sin operadores)");
-                }
-
-                // Reglas base
-                agregarRegla("expAsig -> var || num || var[numV]");
-                agregarRegla("var -> let (let||numV)*");
-                agregarRegla("let -> A-Z || a-z");
-                agregarRegla("numV -> dig dig*");
-                agregarRegla("num -> (- || ∅ )(dig dig* || dig dig* .dig dig*) ");
-                agregarRegla("dig -> 0-9");
-
-                index += asignacionMatch[0].length;
-                continue;
-            }
-
-            // ------------------ No reconocido ------------------
-            let nextSemicolon = resto.indexOf(';');
-            if (nextSemicolon !== -1) {
-                index += nextSemicolon + 1;
-            } else {
-                break;
-            }
-        }
-    }
-
-    analizarBloque(codigo);
-
-    // Agregar todas las reglas únicas al final
-    reglas.forEach(r => resultado.push(r));
-
-    return resultado.join("\n");
-}
-
-    analizarSemanticoBtn.addEventListener("click", () => {
-        const codigo = input.value.trim();
-        if (codigo === "") {
-            resultBox.value = "Por favor ingresa el código a analizar.";
-            return;
-        }
-        const resultado = analizarSemanticoCompleto(codigo);
-        resultBox.value = resultado;
+        alert("Equipo: Dragones 🐉\n\n" + integrantes.join("\n") + "\n\n Docente: Silva Hernández Felipe");
     });
 });

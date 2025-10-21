@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analizador Léxico y Sintáctico</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="left-section">
+                <img src="/images/uat.png" alt="Logo superior" class="logo" />
+                <img src="/images/uamm.png" alt="Logo inferior" class="logo" />
+            </div>
+            <div class="right-section">
+                <h1 class="title-line">UAT | Universidad Autonoma de Tamaulipas</h1>
+                <h1 class="title-line">UAMM | Unidad Academica Multidisciplinaria Mante</h1>
+                <h1 class="title-line">ISC | Ingeniería en Sistemas Computacionales</h1>
+                <h2 class="subtitle">Analizador Léxico, Sintáctico y Semantico</h2>
+                <h3 class="team">Equipo: Dragones</h3>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="left-section">
+                <div class="button-group grupo1">
+                    <button class="action-button" id="analizarBtn">Analizador Léxico</button>
+                    <button class="action-button" id="analizarSintacticoBtn">Analizador Sintáctico</button>
+                    <button class="action-button" id="analizarSemanticoBtn">Analizador Semántico</button>
+                    <button class="action-button" id="borrarBtn">Borrar</button>
+                    <button class="action-button" id="salirBtn">Salir</button>
+                    <button class="action-button" id="equipoBtn">Equipo</button>
+                </div>
+            </div>
+            <div class="right-section grupo2">
+                <label for="input-cadena" class="input-label">Cadena para analizar</label>
+                <textarea type="text" id="input-cadena" class="text-input" placeholder="Escribe tu cadena aquí..." /></textarea>
+                <textarea id="resultado" class="result-box" readonly placeholder="Aquí se mostrarán los resultados..."></textarea>
+            </div>
+        </main>
+    </div>
+    <script src="librerias/sweetalert2.all.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
